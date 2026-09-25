@@ -31,6 +31,9 @@ SEC = f'{BASE}/.secrets'
 APIF = f'{SEC}/telegram_api.json'
 HASHF = f'{SEC}/tg_phone_code_hash.txt'
 STRF = f'{SEC}/tg_string_session.txt'
+SESSF = f'{SEC}/tg_relogin_session'  # PERSISTENT session file: send & code MUST
+                                     # share the same auth key, else TG reports
+                                     # CODE_EXPIRED for a perfectly fresh code.
 API = json.load(open(APIF))
 PHONE = API['phone']
 
@@ -40,7 +43,7 @@ async def main():
         print('USAGE: send | code <CODE>')
         sys.exit(2)
     mode = sys.argv[1]
-    client = TelegramClient(StringSession(), int(API['api_id']), API['api_hash'],
+    client = TelegramClient(SESSF, int(API['api_id']), API['api_hash'],
                             request_retries=2, retry_delay=1, connection_retries=2,
                             timeout=15)
     await client.connect()
