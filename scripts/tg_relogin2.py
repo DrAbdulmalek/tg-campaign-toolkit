@@ -51,8 +51,7 @@ async def main():
                 f.write(sent.phone_code_hash)
             print('CODE_SENT', flush=True)
         elif mode == 'code':
-            print('NO_PENDING_CODE (run send first)', flush=True)
-            sys.exit(2)
+            pass  # fall through to sign_in below (hash is read from HASHF)
     if mode == 'code':
         # fallthrough only if still unauthorized; if already authed just export
         if await client.is_user_authorized():
