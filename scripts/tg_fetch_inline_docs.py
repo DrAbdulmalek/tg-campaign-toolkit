@@ -67,6 +67,16 @@ def sent_names():
         return set()
 
 
+DOC_EXT = ('.pdf', '.doc', '.docx', '.epub', '.mobi', '.djvu', '.csv', '.xlsx',
+           '.ppt', '.pptx', '.txt', '.zip', '.rar', '.chm', '.fb2', '.azw3')
+
+
+def prio(meta):
+    """Documents first (dictionaries/books are the campaign focus), videos last."""
+    fn = (meta.get('fname') or '').lower()
+    return (0 if fn.endswith(DOC_EXT) else 1, fn)
+
+
 def uniq_path(fname):
     fname = re.sub(r'[\\/:*?"<>|\x00-\x1f]', '_', fname)[:150] or 'unnamed'
     path = os.path.join(DEST, fname)
@@ -102,7 +112,8 @@ async def amain():
     items = [(u, m) for u, m in links.items()
              if m.get('inline_doc')
              and dl.get(u, {}).get('status') not in ('inline_done',)]
-    print(f'INLINE_QUEUE {len(items)}', flush=True)
+    items.sort(key=lambda kv: prio(kv[1]))
+    print(f'INLINE_QUEUE {len(items)} (docs first)', flush=True)
     client = TelegramClient(StringSession(SESSION), int(API['api_id']), API['api_hash'],
                             request_retries=2, retry_delay=1, connection_retries=2,
                             timeout=30, flood_sleep_threshold=0)
@@ -147,7 +158,7 @@ async def amain():
                 dl[u] = {'status': 'inline_done',
                          'size': os.path.getsize(path)}
                 print(f'GOT {fname[:70]} ({dl[u]["size"]}B)', flush=True)
-                await asyncio.sleep(2.0)
+                await asyncio.sleep(1.0)
             except errors.FloodWaitError as e:
                 print(f'FLOOD_WAIT {e.seconds}', flush=True)
                 break
