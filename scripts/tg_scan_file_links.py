@@ -157,6 +157,11 @@ async def scan_source(client, key, ref, prog, links, dlstate, cache_warm):
     async for msg in client.iter_messages(ent, limit=None, reverse=True,
                                           min_id=cursor):
         max_id = msg.id
+        # checkpoint cursor every 250 msgs so BUDGET_OUT resumes (dedup makes
+        # re-scan idempotent anyway, but skipping known range saves API calls)
+        if max_id % 250 == 0 and max_id != prog.get(key):
+            prog[key] = max_id
+            save_json(SCAN, prog)
         text = (msg.message or '') + ' ' + \
                ' '.join((getattr(e, 'url', '') or '')
                         for e in (msg.entities or [])
@@ -182,8 +187,10 @@ async def scan_source(client, key, ref, prog, links, dlstate, cache_warm):
                                       'ts': int(time.time()), 'inline_doc': True})
                     found += 1
         if found and found % 25 == 0:
+            prog[key] = max_id
             save_json(FL, links)
             save_json(DL, dlstate)
+            save_json(SCAN, prog)
         if time.time() - T0 > BUDGET - 10:
             raise BudgetExit()
     prog[key] = max_id
