@@ -59,7 +59,7 @@ async def main():
         # fallthrough only if still unauthorized; if already authed just export
         if await client.is_user_authorized():
             with open(STRF, 'w') as f:
-                f.write(StringSession(client.session).save())
+                f.write(StringSession.save(client.session))
             print('ALREADY_AUTH', flush=True)
         else:
             code = sys.argv[2]
@@ -83,15 +83,15 @@ async def main():
                 print('AUTH_KEY_DUPLICATED (key burned - archive session files '
                       'and start a fresh send)', flush=True)
                 sys.exit(8)
-            s = StringSession(client.session)
+            s = StringSession.save(client.session)
             with open(STRF, 'w') as f:
-                f.write(s.save())
+                f.write(s)
             me = await client.get_me()
             print('AUTH_OK', getattr(me, 'username', None) or getattr(me, 'first_name', ''),
                   flush=True)
     elif mode == 'send' and await client.is_user_authorized():
         with open(STRF, 'w') as f:
-            f.write(StringSession(client.session).save())
+            f.write(StringSession.save(client.session))
         print('ALREADY_AUTH', flush=True)
     await client.disconnect()
 
