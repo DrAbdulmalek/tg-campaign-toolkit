@@ -84,7 +84,7 @@ async def amain():
 
     client = TelegramClient(StringSession(SESSION), int(API['api_id']), API['api_hash'],
                             request_retries=2, retry_delay=1, connection_retries=2,
-                            timeout=15, flood_sleep_threshold=0)
+                            timeout=15, flood_sleep_threshold=25)
     await client.connect()
     if not await client.is_user_authorized():
         print('SESSION_INVALID')
